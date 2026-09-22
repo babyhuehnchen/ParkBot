@@ -1,0 +1,22 @@
+<resources>
+    <string name="start_now">Start now</string>
+    <string name="start_time_value">Start time\n%1$s</string>
+    <string name="stop_time_value">Stop time\n%1$s</string>
+    <string name="start_now_explanation">Sending starts on the next full minute. Uncheck Start now to choose a start time.</string>
+    <string name="theme">Theme</string>
+    <string name="theme_setting">Theme · %1$s</string>
+    <string-array name="theme_choices">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>Follow System Settings</item>
+    </string-array>
+    <string name="oled_dark">OLED Dark</string>
+    <string name="oled_dark_description">Use a pure-black background in dark mode when Material 3 is off.</string>
+    <string name="material_colors">Material 3</string>
+    <string name="material_colors_description">Use wallpaper colors in light and dark mode. Uses a standard Material palette if unavailable.</string>
+    <string name="apply_theme">Apply</string>
+</resources>
+
+
+
+

@@ -1,0 +1,34 @@
+# Local tools, caches, and generated output
+.gradle/
+.tools/
+**/build/
+/dist/
+local.properties
+.idea/
+.vscode/
+*.iml
+*.log
+*.hprof
+.DS_Store
+Thumbs.db
+
+# Signing material and local credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+key.properties
+keystore.properties
+signing.properties
+.env
+.env.*
+!.env.example
+
+# Upload binaries as Release assets, not source files
+*.apk
+*.aab
+*.apks
+*.zip
+
