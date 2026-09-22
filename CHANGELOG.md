@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2
+
+- Added permanent-key release signing with debugging disabled.
+- Added automatic publishing from a version tag or manual GitHub Actions run.
+- Added signature, version, and checksum verification before publishing.
+
 ## 1.2.1
 
 - Added regular Dark mode and ordered modes as Light, Dark, Follow System Settings.
@@ -36,4 +42,5 @@
 ## 1.0.0
 
 - Initial native Android parking SMS scheduler.
+
 
