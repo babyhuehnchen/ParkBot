@@ -16,13 +16,36 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          # The obsolete "tools" package is no longer available.
+          packages: 'platform-tools'
       - uses: gradle/actions/setup-gradle@v4
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - run: sh ./gradlew :core:check :app:assembleDebug :app:lintDebug --no-daemon
-      # CI has its own debug key, different from the locally signed release asset.
+
+      - name: Restore ParkBot signing key
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PARKBOT_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Add PARKBOT_KEYSTORE_BASE64 under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          umask 077
+          mkdir -p "$HOME/.android"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+
+      - name: Build and check ParkBot
+        run: sh ./gradlew :core:check :app:assembleDebug :app:lintDebug --no-daemon
+
+      - name: Remove restored signing key
+        if: always() && github.event_name != 'pull_request'
+        run: rm -f "$HOME/.android/debug.keystore"
+
+      # PR builds use a temporary key and cannot update the installed local app.
       - uses: actions/upload-artifact@v4
         with:
-          name: ParkBot-ci-debug
+          name: ${{ github.event_name == 'pull_request' && 'ParkBot-pr-debug' || 'ParkBot-signed-debug' }}
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - uses: actions/upload-artifact@v4

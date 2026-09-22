@@ -64,7 +64,7 @@ sh ./gradlew :core:check :app:assembleDebug :app:lintDebug
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`. This is a debug-signed test build; keep the signing key stable for updates. Uninstalling clears local settings/history.
 
-A GitHub Actions workflow builds a CI debug APK and runs checks on push, pull request, or manual dispatch. CI uses a different debug signing key, so its APK cannot update the locally signed build in place. It does not send any SMS.
+GitHub Actions builds and checks the app on push, pull request, or manual dispatch. Push/manual builds require PARKBOT_KEYSTORE_BASE64 and use your existing signing key; pull-request builds use a temporary key. See [signing setup](RELEASE.md#github-actions-signing). The workflow does not send any SMS.
 
 ## Verification
 
@@ -85,3 +85,4 @@ Run the PowerShell script prepare-release.ps1 to create the clean source ZIP, AP
 ## License
 
 [MIT](LICENSE). Third-party components retain their respective licenses.
+
