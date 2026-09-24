@@ -65,6 +65,10 @@ public final class MainActivity extends AppCompatActivity {
     private LinearLayout page;
     private ScrollView screen;
     private EditText number, message, interval;
+    private LinearLayout recipientEntry;
+    private MaterialCardView selectedContactCard;
+    private TextView selectedContactNameView, selectedContactNumberView;
+    private String selectedContactName;
     private Button startTime, stopTime, action, simButton;
     private CheckBox now;
     private TextView status, detail, startExplanation;
@@ -159,6 +163,8 @@ public final class MainActivity extends AppCompatActivity {
         } else {
             number = input(draft.getString("number", ""), "Phone number or short code", false);
             number.setInputType(InputType.TYPE_CLASS_PHONE);
+            selectedContactName = draft.getString("contact_name", null);
+            if (number.getText().toString().trim().isEmpty()) selectedContactName = null;
             message = input(draft.getString("message", ""), "Your parking SMS", true);
             interval = input(draft.getString("interval", ""), "Interval (minutes)", false); interval.setInputType(InputType.TYPE_CLASS_NUMBER);
             simId = draft.getInt("sim", -1);
@@ -183,7 +189,13 @@ public final class MainActivity extends AppCompatActivity {
             add(times, interval, 18);
             add(times, text("Seconds are ignored: 14:00:59 + 1 minute schedules the next SMS for 14:01:00.", 12, MUTED, false), 6);
             LinearLayout to = card(); add(to, text("Send to", 18, INK, true), 0);
-            add(to, number, 6); add(to, button("Choose from contacts", false, this::pickContact), 10);
+            recipientEntry = new LinearLayout(this);
+            recipientEntry.setOrientation(LinearLayout.VERTICAL);
+            add(recipientEntry, number, 0);
+            add(recipientEntry, button("Choose from contacts", false, this::pickContact), 10);
+            add(to, recipientEntry, 6);
+            add(to, createSelectedContactCard(), 6);
+            updateRecipientControl();
             add(to, text("Sending SIM", 14, MUTED, true), 18);
             simButton = button("Choose sending SIM", false, this::selectSendingSim);
             add(to, simButton, 8); updateSimControl();
@@ -215,7 +227,8 @@ public final class MainActivity extends AppCompatActivity {
     }
     private void saveDraft() {
         if (showingActive || number == null || now == null) return;
-        draft.edit().putString("number", number.getText().toString()).putString("message", message.getText().toString())
+        draft.edit().putString("number", number.getText().toString()).putString("contact_name", selectedContactName)
+            .putString("message", message.getText().toString())
             .putString("interval", interval.getText().toString()).putString("start", start.toString()).putString("stop", stop.toString())
             .putBoolean("now", now.isChecked()).putInt("sim", simId).apply();
     }
@@ -246,16 +259,82 @@ public final class MainActivity extends AppCompatActivity {
             saveDraft();
         });
     }
+    private MaterialCardView createSelectedContactCard() {
+        selectedContactCard = new MaterialCardView(this);
+        selectedContactCard.setRadius(dp(16));
+        selectedContactCard.setCardElevation(0);
+        selectedContactCard.setCardBackgroundColor(BG);
+        selectedContactCard.setStrokeWidth(dp(1));
+        selectedContactCard.setStrokeColor(themeColor(com.google.android.material.R.attr.colorOutlineVariant));
+        LinearLayout content = new LinearLayout(this);
+        content.setPadding(dp(16), dp(8), dp(8), dp(8));
+        LinearLayout labels = new LinearLayout(this);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        labels.setPadding(0, dp(8), dp(8), dp(8));
+        selectedContactNameView = text("", 18, INK, true);
+        selectedContactNumberView = text("", 15, MUTED, false);
+        selectedContactNumberView.setTextDirection(View.TEXT_DIRECTION_LTR);
+        add(labels, selectedContactNameView, 0);
+        add(labels, selectedContactNumberView, 2);
+        content.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
+        MaterialButton remove = (MaterialButton) button(getString(R.string.remove_contact_symbol), false, this::clearSelectedContact);
+        remove.setContentDescription(getString(R.string.remove_selected_contact));
+        remove.setTooltipText(getString(R.string.remove_selected_contact));
+        remove.setMinWidth(0);
+        remove.setMinimumWidth(0);
+        remove.setMinHeight(dp(48));
+        remove.setPadding(0, 0, 0, 0);
+        remove.setTextSize(24);
+        remove.setTextColor(INK);
+        remove.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+        LinearLayout.LayoutParams closeParams = new LinearLayout.LayoutParams(dp(48), dp(48));
+        closeParams.gravity = Gravity.TOP;
+        content.addView(remove, closeParams);
+        selectedContactCard.addView(content, new FrameLayout.LayoutParams(-1, -2));
+        return selectedContactCard;
+    }
+    private void updateRecipientControl() {
+        boolean selected = selectedContactName != null;
+        recipientEntry.setVisibility(selected ? View.GONE : View.VISIBLE);
+        selectedContactCard.setVisibility(selected ? View.VISIBLE : View.GONE);
+        selectedContactNameView.setText(selected ? selectedContactName : "");
+        selectedContactNumberView.setText(selected ? number.getText().toString() : "");
+    }
+    private void clearSelectedContact() {
+        selectedContactName = null;
+        number.setText("");
+        updateRecipientControl();
+        saveDraft();
+        number.requestFocus();
+    }
     private void pickContact() {
         try { startActivityForResult(new Intent(Intent.ACTION_PICK).setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE), 20); }
         catch (ActivityNotFoundException e) { show("No contact picker", "You can enter the number directly instead."); }
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if (request != 20 || result != RESULT_OK || data == null || data.getData() == null) return;
-        try (Cursor c = getContentResolver().query(data.getData(), new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER}, null, null, null)) {
-            if (c != null && c.moveToFirst()) { number.setText(c.getString(0)); saveDraft(); }
-        } catch (RuntimeException e) { show("Contact unavailable", "Could not read that number. Please enter it directly."); }
+        if (request != 20 || result != RESULT_OK || data == null || data.getData() == null || showingActive || number == null) return;
+        String phone;
+        String name;
+        try (Cursor c = getContentResolver().query(data.getData(), new String[]{
+            ContactsContract.CommonDataKinds.Phone.NUMBER,
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
+        }, null, null, null)) {
+            if (c == null || !c.moveToFirst()) throw new IllegalArgumentException("No contact number");
+            phone = c.getString(c.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            int nameColumn = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+            name = nameColumn >= 0 ? c.getString(nameColumn) : null;
+            if (phone == null || phone.trim().isEmpty()) throw new IllegalArgumentException("Empty contact number");
+        } catch (RuntimeException e) {
+            show("Contact unavailable", "Could not read that number. Please enter it directly.");
+            return;
+        }
+        selectedContactName = name == null || name.trim().isEmpty() ? getString(R.string.selected_contact) : name;
+        number.setText(phone);
+        number.clearFocus();
+        updateRecipientControl();
+        WindowCompat.getInsetsController(getWindow(), screen).hide(WindowInsetsCompat.Type.ime());
+        saveDraft();
     }
     private void prepareStart() {
         if (busy) return;

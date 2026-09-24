@@ -53,3 +53,17 @@ Use an authorized test number first; each live SMS can incur a charge.
 - Enter form values, change themes, and verify values including an empty interval survive.
 - Change theme during an active session: status, selected SIM, history, and next scheduled SMS remain intact.
 - Verify Start now still hides the start-time box and centers the stop-time box, and the PARKBOT heading stays below the status bar.
+
+## Contact card (1.2.3, pending device verification)
+
+- Pick a contact: show the name above the exact selected phone number, with no editable recipient field or picker button visible.
+- Pick a contact with multiple phone numbers: show and use the chosen number in Start parking confirmation.
+- Tap ×: restore a blank number field and Choose from contacts; retain message, interval, times, and SIM.
+- Enter a number manually: keep it editable, including after reopening the app.
+- Reopen, rotate, and change theme: preserve the selected contact card and number.
+- Cancel the picker or return an unreadable contact: preserve the existing recipient.
+- Test a contact without a display name: show Selected contact above the number.
+- Check long names/numbers, large text, and Light, Dark, OLED, and Material 3: labels wrap without overlapping the ×.
+- With TalkBack, confirm the 48dp close button is announced as Remove selected contact.
+- Pick while the keyboard is open: hide the keyboard when the card appears; clearing returns focus to number entry.
+- Upgrade with a previously saved phone-only draft: keep manual entry available until a contact is picked again.

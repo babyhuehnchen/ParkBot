@@ -15,6 +15,9 @@
     <string name="material_colors">Material 3</string>
     <string name="material_colors_description">Use wallpaper colors in light and dark mode. Uses a standard Material palette if unavailable.</string>
     <string name="apply_theme">Apply</string>
+    <string name="selected_contact">Selected contact</string>
+    <string name="remove_selected_contact">Remove selected contact</string>
+    <string name="remove_contact_symbol" translatable="false">×</string>
 </resources>
 
 

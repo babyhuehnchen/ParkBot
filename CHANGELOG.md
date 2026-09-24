@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3
+
+- Show selected contacts in a box with their name and phone number.
+- Add an × button to clear the contact and return to number entry.
+- Remember the selected contact between visits.
+
 ## 1.2.2
 
 - Added permanent-key release signing with debugging disabled.

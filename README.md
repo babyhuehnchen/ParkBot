@@ -22,6 +22,8 @@ With **Start now**, the first message is scheduled for the next full minute. Par
 
 The main screen shows your next SMS, your last sent message time, and how many messages have been sent. Open **History** to check previous sends or see why sending stopped.
 
+Picked contacts appear in a box with their name and number. Tap **×** to clear the contact and enter a number or choose someone else. Your other choices stay as they are.
+
 Your choices are remembered for next time.
 
 ## Make it yours
