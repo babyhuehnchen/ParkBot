@@ -15,8 +15,8 @@ android {
         applicationId = "tf.dodoapps.parkbot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.2.3"
+        versionCode = 10
+        versionName = "1.2.4"
     }
     signingConfigs {
         create("release") {

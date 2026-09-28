@@ -103,22 +103,29 @@ final class Bot {
             PendingIntent pending = PendingIntent.getBroadcast(c, 1, new Intent(c, BotReceiver.class).setAction("tf.dodoapps.parkbot.TICK"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (at == null) manager.cancel(pending);
             else manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, Math.max(at, System.currentTimeMillis() + 100), pending);
-            notifyState(c);
+            Session s = new Storage(c).load();
+            if (s.active()) notifyState(c, s);
+        }
+        public void ended(Session s) {
+            // Notification problems must not prevent alarm cancellation or saving history.
+            try { notifyState(c, s); }
+            catch (RuntimeException e) { android.util.Log.e("ParkBot", "End notification", e); }
         }
     }
     @SuppressLint("MissingPermission")
-    static void notifyState(Context c) {
+    static void notifyState(Context c, Session s) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         nm.createNotificationChannel(new NotificationChannel("parking", "Parking status", NotificationManager.IMPORTANCE_DEFAULT));
         if (Build.VERSION.SDK_INT >= 33 && !granted(c, Manifest.permission.POST_NOTIFICATIONS)) return;
-        Session s = new Storage(c).load();
-        if (s.status.equals("IDLE") || s.status.equals("STOPPED")) { nm.cancel(1); return; }
-        String title = s.status.equals("FAILED") ? "ParkBot needs attention" : s.active() ? "ParkBot is running" : "Parking session finished";
+        if (s.status.equals("IDLE")) { nm.cancel(1); return; }
+        String title = s.status.equals("FAILED") ? "ParkBot needs attention"
+            : s.status.equals("STOPPED") ? "Parking stopped"
+            : s.active() ? "ParkBot is running" : "Parking session finished";
         String detail = s.status.equals("SCHEDULED") ? "Next SMS " + time(s.nextAt) + " · stop " + time(s.stopAt) : s.detail;
         PendingIntent open = PendingIntent.getActivity(c, 0, new Intent(c, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder n = new Notification.Builder(c, "parking").setSmallIcon(R.drawable.ic_status).setContentTitle(title)
             .setContentText(detail).setStyle(new Notification.BigTextStyle().bigText(detail)).setContentIntent(open).setOngoing(s.active())
-            .setOnlyAlertOnce(!s.status.equals("FAILED")).setVisibility(Notification.VISIBILITY_PRIVATE);
+            .setOnlyAlertOnce(s.active()).setAutoCancel(!s.active()).setVisibility(Notification.VISIBILITY_PRIVATE);
         if (s.active()) {
             PendingIntent stop = PendingIntent.getBroadcast(c, 2, new Intent(c, BotReceiver.class).setAction("tf.dodoapps.parkbot.STOP"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             n.addAction(new Notification.Action.Builder(android.graphics.drawable.Icon.createWithResource(c, R.drawable.ic_status), "Stop parking", stop).build());

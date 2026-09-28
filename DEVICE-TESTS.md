@@ -67,3 +67,13 @@ Use an authorized test number first; each live SMS can incur a charge.
 - With TalkBack, confirm the 48dp close button is announced as Remove selected contact.
 - Pick while the keyboard is open: hide the keyboard when the card appears; clearing returns focus to number entry.
 - Upgrade with a previously saved phone-only draft: keep manual entry available until a contact is picked again.
+## End notifications (1.2.4, pending device verification)
+
+- Stop active parking from the app and from its notification: receive one Parking stopped notification, with no Stop action.
+- Dismiss that notification, reopen ParkBot several times, and reboot: it must not return.
+- Let parking finish automatically: receive one completion notification; dismiss, reopen, and reboot without repeats.
+- End a session through a send failure: receive one attention notification, without repeats on reopen/reboot.
+- Reboot while parking is active: keep future renewals scheduled; if the stop time has passed, finish and notify once.
+- Start and stop a new session after a previous end: receive the new session's notification.
+- Tap an end notification: open ParkBot and automatically dismiss the notification.
+- Upgrade with an already finished/stopped session: do not post a new notification for the old session.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4
+
+- Notify once when an active parking session stops, finishes, or needs attention.
+- Prevent old end notifications from returning when opening ParkBot or rebooting.
+- Ignore repeated stop requests for sessions that have already ended.
+
 ## 1.2.3
 
 - Show selected contacts in a box with their name and phone number.

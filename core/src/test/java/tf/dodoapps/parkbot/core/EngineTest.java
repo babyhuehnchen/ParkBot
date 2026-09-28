@@ -27,6 +27,12 @@ public final class EngineTest {
     static class Fixture implements Engine.Platform {
         long now = BASE; Long alarm; int sends, parts = 1; boolean stop, failArm, failSend; String problem;
         Runnable beforeSend = () -> {};
+        List<String> ended = new ArrayList<>();
+        public void ended(Session s) {
+            eq(s.status, db.session.status);
+            eq(false, db.session.active());
+            ended.add(s.status);
+        }
         Memory db = new Memory(); Engine engine = create();
         Engine create() { return new Engine(db, this, () -> now, () -> stop); }
         public String blockingReason(int sim) { return problem; }
@@ -90,6 +96,45 @@ public final class EngineTest {
         test("14:00:59 with three minutes schedules 14:03:00", () -> { Fixture f=new Fixture(); f.engine.start("12345","P",1,3,BASE,BASE+10*MIN); f.now=BASE+59_000; f.sent(); eq(BASE+3*MIN,f.alarm); });
         test("older rounded-up renewal is recalculated on recovery", () -> { Fixture f=new Fixture(); f.engine.start("12345","P",1,1,BASE,BASE+10*MIN); f.now=BASE+59_000; f.sent(); f.db.session.nextAt=BASE+2*MIN; f.engine=f.create(); f.engine.tick(); eq(BASE+MIN,f.alarm); eq(1,f.sends); });
         test("delayed callback uses its minute without adding extra minute", () -> { Fixture f=new Fixture(); f.engine.start("12345","P",1,1,BASE,BASE+10*MIN); f.now=BASE+2*MIN+59_000; f.sent(); eq(BASE+3*MIN,f.alarm); });
+        test("idle launch and recovery never announce an end", () -> {
+            Fixture f=new Fixture(); f.engine.tick(); f.engine=f.create(); f.engine.tick();
+            f.engine.stop("stale stop"); eq(List.of(),f.ended); eq("IDLE",f.db.session.status);
+        });
+        test("manual stop announces once across reopen and reboot recovery", () -> {
+            Fixture f=new Fixture(); f.start(); f.engine.stop("Parking stopped.");
+            eq(List.of("STOPPED"),f.ended); int events=f.db.log.size();
+            f.engine.tick(); f.engine=f.create(); f.engine.tick(); f.engine.stop("duplicate stop");
+            eq(List.of("STOPPED"),f.ended); eq(events,f.db.log.size()); eq(null,f.alarm);
+        });
+        test("stop-time finish announces once across recovery", () -> {
+            Fixture f=new Fixture(); f.engine.start("12345","P",1,18,BASE+MIN,BASE+5*MIN);
+            f.now=BASE+5*MIN; f.engine.tick(); eq(List.of("FINISHED"),f.ended);
+            f.engine=f.create(); f.engine.tick(); f.engine.tick(); f.engine.stop("stale stop");
+            eq(List.of("FINISHED"),f.ended); eq("FINISHED",f.db.session.status); eq(0,f.sends);
+        });
+        test("last successful SMS announces completion once", () -> {
+            Fixture f=new Fixture(); f.engine.start("12345","P",1,18,BASE,BASE+18*MIN);
+            f.sent(); f.sent(); f.engine=f.create(); f.engine.tick();
+            eq(List.of("FINISHED"),f.ended); eq(1,f.sends);
+        });
+        test("failed session is not announced again by recovery or stale stop", () -> {
+            Fixture f=new Fixture(); f.start(); f.engine.sent(f.db.session.token,0,false,"No service");
+            f.engine=f.create(); f.engine.tick(); f.engine.stop("stale stop");
+            eq(List.of("FAILED"),f.ended); eq("FAILED",f.db.session.status);
+        });
+        test("active recovery keeps scheduling without an end notification", () -> {
+            Fixture f=new Fixture(); f.engine.start("12345","P",1,18,BASE+10*MIN,BASE+90*MIN);
+            f.engine=f.create(); f.engine.tick(); eq(BASE+10*MIN,f.alarm); eq(List.of(),f.ended);
+        });
+        test("each new parking session can announce its own stop", () -> {
+            Fixture f=new Fixture(); f.start(); f.engine.stop("stop");
+            f.engine.start("12345","P",1,18,BASE+20*MIN,BASE+120*MIN); f.engine.stop("stop");
+            eq(List.of("STOPPED","STOPPED"),f.ended);
+        });
+        test("clock-change stop announces once", () -> {
+            Fixture f=new Fixture(); f.start(); f.engine.clockChanged(); f.engine.clockChanged();
+            f.engine=f.create(); f.engine.tick(); eq(List.of("STOPPED"),f.ended);
+        });
         System.out.println(passed + " scheduler checks passed.");
     }
 }

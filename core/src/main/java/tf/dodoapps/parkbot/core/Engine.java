@@ -14,6 +14,7 @@ public final class Engine {
         int parts(String message);
         void send(Session s, BooleanSupplier allowed);
         void arm(Long at);
+        void ended(Session s);
     }
     private final Store store;
     private final Platform platform;
@@ -65,13 +66,15 @@ public final class Engine {
         String problem = platform.blockingReason(simId);
         if (problem != null) throw new IllegalStateException(problem);
         s.status = "SCHEDULED"; s.detail = "First SMS scheduled.";
-        store.save(s); store.event("Parking started. First SMS scheduled.");
+        save(s); store.event("Parking started. First SMS scheduled.");
         try { arm(s); } catch (RuntimeException error) { fail(s, "Could not schedule: " + error.getMessage()); throw error; }
         tick();
     }
     public void stop(String reason) {
-        Session s = store.load(); s.status = "STOPPED"; s.detail = reason;
-        store.save(s); store.event(reason); platform.arm(null);
+        Session s = store.load();
+        if (!s.active()) { platform.arm(null); return; }
+        s.status = "STOPPED"; s.detail = reason;
+        save(s); store.event(reason); platform.arm(null);
     }
     public void clockChanged() { if (store.load().active()) stop("Phone clock changed. Check your ticket before restarting."); }
     public void tick() {
@@ -81,7 +84,7 @@ public final class Engine {
         if (stopped.getAsBoolean()) { stop("Parking stopped."); return; }
         if (now >= s.stopAt) {
             s.status = "FINISHED"; s.detail = "Stop time reached. No more SMS will be sent.";
-            store.save(s); store.event(s.detail); platform.arm(null); return;
+            save(s); store.event(s.detail); platform.arm(null); return;
         }
         String problem = platform.blockingReason(s.simId);
         if (problem != null) { fail(s, problem); return; }
@@ -98,13 +101,13 @@ public final class Engine {
             if (s.nextAt >= s.stopAt) {
                 s.status = "FINISHED"; s.detail = "No full-minute send remains before the stop time.";
             }
-            store.save(s);
+            save(s);
             if (!s.active()) { arm(s); return; }
         }
         if (now < s.nextAt) { arm(s); return; }
         s.token = UUID.randomUUID().toString(); s.sentMask = 0; s.submittedAt = now;
         s.status = "WAITING"; s.detail = "Waiting for the phone to confirm sending.";
-        store.save(s);
+        save(s);
         store.event("Submitting SMS" + (now - s.nextAt >= 60_000 ? " (delayed " + ((now - s.nextAt) / 60_000) + " min)" : "") + ".");
         try {
             arm(s);
@@ -125,14 +128,20 @@ public final class Engine {
             s.detail = s.status.equals("FINISHED") ? "Last SMS sent. No more renewals before the stop time." : "SMS sent. Next renewal is calculated from the sent minute, ignoring seconds.";
             store.event("SMS sent successfully. " + (s.active() ? "Next renewal: sent minute + " + s.intervalMs / 60_000 + " minutes (seconds ignored)." : "Session complete."));
         }
-        store.save(s); arm(s);
+        save(s); arm(s);
+    }
+    private void save(Session s) {
+        boolean wasActive = store.load().active();
+        // Persist the transition first so reopening or rebooting cannot announce it again.
+        store.save(s);
+        if (wasActive && !s.active()) platform.ended(s);
     }
     private void arm(Session s) {
         Long at = !s.active() ? null : Math.min(s.stopAt, s.status.equals("WAITING") ? s.submittedAt + CALLBACK_TIMEOUT_MS : s.nextAt);
         platform.arm(at);
     }
     private void fail(Session s, String reason) {
-        s.status = "FAILED"; s.detail = reason; store.save(s); store.event(reason); platform.arm(null);
+        s.status = "FAILED"; s.detail = reason; save(s); store.event(reason); platform.arm(null);
     }
 }
 
