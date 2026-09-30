@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Converted the app to Kotlin while preserving the existing screens and parking features.
+- Kept saved settings, contacts, history, and active-session recovery compatible with previous versions.
+- Preserved whole-minute scheduling and one-time end notifications.
+
 ## 1.2.4
 
 - Notify once when an active parking session stops, finishes, or needs attention.

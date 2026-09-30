@@ -32,11 +32,11 @@ A new release key cannot make an ordinary in-place update to the old debug-signe
 3. Open **Actions → Release ParkBot → Run workflow**.
 4. Select the branch containing the version you want to publish and click **Run workflow**.
 
-The workflow reads the version from app/build.gradle.kts, builds and signs the release APK, runs checks, verifies the APK is not debuggable, and automatically publishes a GitHub Release with the APK and SHA256SUMS.txt. The current version is **1.2.4** (version code **10**).
+The workflow reads the version from app/build.gradle.kts, builds and signs the release APK, runs checks, verifies the APK is not debuggable, and automatically publishes a GitHub Release with the APK and SHA256SUMS.txt. The current version is **1.3.0** (version code **11**).
 
-It creates tag **v1.2.4** at the exact commit that was built. A tag already pointing to a different commit or an existing release causes publishing to stop rather than replacing it. Release notes come from releases/v1.2.4.md.
+It creates tag **v1.3.0** at the exact commit that was built. A tag already pointing to a different commit or an existing release causes publishing to stop rather than replacing it. Release notes come from releases/v1.3.0.md.
 
-You can alternatively push a matching version tag, such as **v1.2.4**, to start the same workflow. Ordinary branch pushes and pull requests do not publish releases.
+You can alternatively push a matching version tag, such as **v1.3.0**, to start the same workflow. Ordinary branch pushes and pull requests do not publish releases.
 
 The built files also appear under the run's **Artifacts** if publishing fails. If a failed upload leaves a draft release, inspect/delete that incomplete draft before retrying; an existing release is never overwritten automatically. Nothing is published if signing, tests, lint, or APK verification fails.
 
@@ -47,10 +47,16 @@ The built-in GitHub token is used for publishing; you do not need a personal acc
 Before publishing again:
 
 1. Increase **versionCode** and change **versionName** in app/build.gradle.kts.
-2. Add matching notes, for example releases/v1.2.5.md.
+2. Add matching notes, for example releases/v1.3.1.md.
 3. Commit the changes and run **Release ParkBot** again, or push the matching tag.
 
 Changing only the GitHub tag does not change the app version. The workflow checks that a pushed tag matches the version in the app.
+
+## Updating the repository from Java to Kotlin
+
+Version 1.3.0 replaces all six Java files with Kotlin files. Remove the old tracked .java files when applying the source ZIP; uploading new files alone does not delete old files on GitHub. Keep the new .kt files and updated Gradle scripts.
+
+The build uses Kotlin 2.2.21, Android Gradle Plugin 8.10.1, Gradle 8.11.1, and JDK 17. Existing GitHub workflow commands and signing secrets remain the same.
 
 ## Debug builds
 

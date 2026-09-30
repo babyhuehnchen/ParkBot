@@ -1,4 +1,4 @@
-plugins { id("com.android.application") }
+plugins { id("com.android.application"); kotlin("android") }
 
 val releaseSigningVariables = listOf(
     "PARKBOT_RELEASE_KEYSTORE_PATH",
@@ -15,8 +15,8 @@ android {
         applicationId = "tf.dodoapps.parkbot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.2.4"
+        versionCode = 11
+        versionName = "1.3.0"
     }
     signingConfigs {
         create("release") {
@@ -55,3 +55,5 @@ dependencies {
 }
 tasks.withType<JavaCompile>().configureEach { options.encoding = "UTF-8" }
 
+
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }

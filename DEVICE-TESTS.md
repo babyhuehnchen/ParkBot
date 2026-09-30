@@ -77,3 +77,10 @@ Use an authorized test number first; each live SMS can incur a charge.
 - Start and stop a new session after a previous end: receive the new session's notification.
 - Tap an end notification: open ParkBot and automatically dismiss the notification.
 - Upgrade with an already finished/stopped session: do not post a new notification for the old session.
+## Kotlin migration (1.3.0, pending device verification)
+
+- Update an existing 1.2.4 installation without uninstalling; verify draft times, interval, message, selected contact, SIM, theme, and history survive.
+- Update during a scheduled or waiting session; verify recovery respects the saved schedule and does not resend a pending SMS.
+- Test all themes, status/navigation insets, keyboard insets, time pickers, contact selection/removal, and rotation.
+- Confirm single-SIM and multi-SIM selection and permissions still work.
+- Test SMS success, failure, manual stop, automatic completion, and dismiss/reopen/reboot behavior.

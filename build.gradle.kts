@@ -1,1 +1,5 @@
-plugins { id("com.android.application") version "8.9.1" apply false }
+plugins {
+    id("com.android.application") version "8.10.1" apply false
+    kotlin("android") version "2.2.21" apply false
+    kotlin("jvm") version "2.2.21" apply false
+}

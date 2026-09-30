@@ -1,4 +1,4 @@
-plugins { `java-library` }
+plugins { kotlin("jvm"); `java-library` }
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 tasks.register<JavaExec>("checkEngine") {
     dependsOn(tasks.testClasses)
@@ -7,3 +7,5 @@ tasks.register<JavaExec>("checkEngine") {
 }
 tasks.check { dependsOn("checkEngine") }
 tasks.withType<JavaCompile>().configureEach { options.encoding = "UTF-8" }
+
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }

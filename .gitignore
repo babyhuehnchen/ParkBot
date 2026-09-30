@@ -1,5 +1,6 @@
 # Local tools, caches, and generated output
 .gradle/
+.kotlin/
 .tools/
 **/build/
 /dist/
